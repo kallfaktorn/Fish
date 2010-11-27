@@ -1,0 +1,50 @@
+Erlang R14B (erts-5.8.1) [source] [64-bit] [rq:1] [async-threads:0]
+
+Eshell V5.8.1  (abort with ^G)
+1> c(game).
+{ok,game}
+2> game:new_game().
+true
+3> game:new_player(mat).
+Welcome: mat.
+Enter game:turn(mat, Parameter). to make your turn.
+Parameter is either pirch or pike.
+
+ok
+4> game:new_player(mat2).
+Welcome: mat2.
+Enter game:turn(mat2, Parameter). to make your turn.
+Parameter is either pirch or pike.
+
+ok
+5> game:turn(mat,pirch).
+Test{play,<0.41.0>,pirch}
+6> game:turn(mat2,pirch).
+Test{play,<0.43.0>,pirch}
+Player: <0.41.0> Points: 0. 
+Player: <0.43.0> Points: 1. 
+7> game:turn(mat2,pike). 
+Test{play,<0.43.0>,pike}
+8> game:turn(mat,pirch). 
+Test{play,<0.41.0>,pirch}
+Player: <0.41.0> Points: 1. 
+Player: <0.43.0> Points: 1. 
+9> game:turn(mat2,pike).
+Test{play,<0.43.0>,pike}
+10> game:turn(mat,pirch).
+Test{play,<0.41.0>,pirch}
+Player: <0.41.0> Points: 2. 
+Player: <0.43.0> Points: 1. 
+11> game:turn(mat2,pike).
+Test{play,<0.43.0>,pike}
+12> game:turn(mat,pirch).
+Test{play,<0.41.0>,pirch}
+Player: <0.43.0> Points: 1. 
+Player: <0.41.0> Points: 3. 
+13> game:turn(mat2,pike).
+Test{play,<0.43.0>,pike}
+14> game:turn(mat,pirch).
+Test{play,<0.41.0>,pirch}
+Player: <0.43.0> Points: 3. 
+Player: <0.41.0> Points: 4. 
+15>
