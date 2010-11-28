@@ -1,7 +1,37 @@
 -module(game).
 -import(lists).
 -import(random).
--export([new_game/0,new_player/1,turn/2]).
+-export([new_game/0,new_player/1,turn/2,create_game_data/0,test/0]).
+
+test() ->
+    new_game(),
+	new_player(p1),
+	new_player(p2),
+	new_player(p3),
+	turn(p1,pirch),
+	turn(p2,pike),
+	turn(p3,pirch).
+
+-record(game,
+    {game_data,
+	game_state,
+	players_state,
+	lake_state}).
+
+-record(game_data,
+    {nr_of_players=2,
+	nr_of_turns}).
+
+-record(game_state,
+    {turn=0}).
+
+-record(players_state,
+    {before_turn,
+	after_turn}).
+
+-record(lake_state,
+    {lake}).
+
 
 new_game() -> case whereis(game_pid) of
                   undefined -> NrOfPlayers = 2,
@@ -60,50 +90,58 @@ turn(Name, Hunting) ->
 		end.
 
 
+create_game_data() ->
+    #game_data{nr_of_turns=[1,2,3]}.
+
+
 init_game(NrOfPlayers,NrOfTurns) ->
     Game = [],
-    GlobalGameData ={game, NrOfPlayers, NrOfTurns},
-	GameState = init_game_state(NrOfPlayers),
-	PlayersState = {playersState,{[],[]}},
-	LakeState = create_lake(),
-	[GlobalGameData|[GameState|[PlayersState|[LakeState|Game]]]].
+    GameData = #game_data{nr_of_players = NrOfPlayers,
+	                            nr_of_turns   = NrOfTurns},   
+	GameState = init_game_state(NrOfTurns),
+	PlayersState = #players_state{before_turn = [],
+	                              after_turn  = []}, 
+	LakeState = create_lake_state(),
+	[GameData|[GameState|[PlayersState|[LakeState|Game]]]].
 
 %Unfinished.
-%Parameter should be NrOfPlayers.
-init_game_state(_) ->
-    Turn =                         {turn, 0},
-	{gameState, Turn}.
+%Parameter should be NrOfTurns.
+init_game_state(NrOfTurns) ->
+    #game_state{turn = NrOfTurns}.
+    %Turn =                         {turn, 0},
+	%{gameState, Turn}.
 
-create_lake() -> {lakeState, pick_random(lakes())}.
+create_lake_state() -> #lake_state{lake = pick_random(lakes())}.
+%{lake_state, pick_random(lakes())}.
 
 lakes() -> [[pirch,pike],[pirch,pirch],[pirch],[pike]].
 
 
 
 space_left(Game) -> 
-    {{game, Nop, _}, GameRest1}          = remove(game, Game),
-	{{playersState, {Performing, _}}, _} = remove(playersState, GameRest1),
+    {{game_data, Nop, _}, GameRest1}          = remove(game_data, Game),
+	{{players_state, Performing, _}, _}     = remove(players_state, GameRest1),
 	length(Performing) < Nop.
     
 
 add_player(Game, PlayerPid, Value) ->
-    {{playersState, {Performing, Waiting}}, GameRest} = remove(playersState, Game),
-	[{playersState, {[{PlayerPid, Value}|Performing], Waiting}}|GameRest].
+    {{players_state, Performing, Waiting}, GameRest} = remove(players_state, Game),
+	[{players_state, [{PlayerPid, Value}|Performing], Waiting}|GameRest].
 
 
 
 play(Game, Pid, Hunting) ->
     io:format("Test"),
-    {{playersState, {Performing, Waiting}}, GameRest} = remove(playersState, Game),
+    {{players_state, Performing, Waiting}, GameRest} = remove(players_state, Game),
 	case remove(Pid, Performing) of
 	{{Pid, Value}, PerformingRest}  ->
-	    [{playersState, {PerformingRest, [{Pid, Hunting, Value}|Waiting]}}|GameRest];
+	    [{players_state, PerformingRest, [{Pid, Hunting, Value}|Waiting]}|GameRest];
 	nix -> io:format("Error: Not yet players turn or player does not exist.~n"),
 	       nix
 	end.
 
 tryEvaluate(Game) ->
-    {{playersState, {Performing, _}}, _} = remove(playersState, Game),
+    {{players_state, Performing, _}, _} = remove(players_state, Game),
 	case Performing of 
 	    [] -> GameRest = evaluate(Game),
 		      printPlayers(GameRest),
@@ -112,12 +150,12 @@ tryEvaluate(Game) ->
 	end.
 
 evaluate(Game) ->
-  {{lakeState, Fishes}, GameRest1}         = remove(lakeState, Game),
-  {{playersState, {_, Players}},GameRest2} = remove(playersState, GameRest1),
+  {{lake_state, Fishes}, GameRest1}         = remove(lake_state, Game),
+  {{players_state, _, Players},GameRest2} = remove(players_state, GameRest1),
   evaluate(GameRest2, Players, [], Fishes).
     
 evaluate(Game, [], EvalPlayers, _) ->
-  [create_lake()|[{playersState, {EvalPlayers, []}}|Game]];
+  [create_lake_state()|[{players_state, EvalPlayers, []}|Game]];
 evaluate(Game, Players, EvalPlayers, Fishes) ->
   {Pid, Hunting, Value} = pick_random(Players),
   {_, PlayersRest} = remove(Pid,Players),
@@ -127,7 +165,7 @@ evaluate(Game, Players, EvalPlayers, Fishes) ->
   end.
 
 printPlayers(Game) ->
-    {{playersState, {Performing,_}}, _} = remove(playersState, Game),
+    {{players_state, Performing,_}, _} = remove(players_state, Game),
 	printPlayersStat(Performing).
 
 printPlayersStat([]) -> [];
