@@ -1,7 +1,7 @@
 -module(game).
 -import(lists).
 -import(random).
--export([new_game/0,new_player/1,turn/2,create_game_data/0,test/0]).
+-export([new_game/0,new_player/1,turn/2,test/0]).
 
 test() ->
     new_game(),
@@ -33,10 +33,36 @@ test() ->
     {lake}).
 
 
+create_game(NrOfPlayers, NrOfTurns) ->
+    GameData     = create_game_data(NrOfPlayers, NrOfTurns),
+	GameState    = create_game_state(NrOfTurns),
+	PlayersState = create_empty_players_state(),
+	LakeState    = create_lake_state(),
+	Game = #game{game_data     = GameData,
+	             game_state    = GameState,
+                 players_state = PlayersState,
+                 lake_state    = LakeState},
+    Game.
+
+
+create_game_data(NrOfPlayers, NrOfTurns) ->
+    #game_data{nr_of_players = NrOfPlayers,
+	           nr_of_turns   = NrOfTurns}.
+
+create_game_state(NrOfTurns) ->
+    #game_state{turn = NrOfTurns}.
+
+create_empty_players_state() ->
+	#players_state{before_turn = [],
+	               after_turn  = []}.
+
+create_lake_state() -> #lake_state{lake = pick_random(lakes())}.
+
+
 new_game() -> case whereis(game_pid) of
                   undefined -> NrOfPlayers = 2,
 				               NrOfTurns   = 2, %Unused. For now...
-				               Game = init_game(NrOfPlayers,NrOfTurns), 
+				               Game = create_game(NrOfPlayers,NrOfTurns), 
 				               GamePid = spawn( fun() ->
 				                                    process_flag(trap_exit, true),
 												    loop(Game)
@@ -90,35 +116,6 @@ turn(Name, Hunting) ->
 		end.
 
 
-create_game_data() ->
-    #game_data{nr_of_turns=[1,2,3]}.
-
-
-init_game(NrOfPlayers,NrOfTurns) ->
-    %Game = [],
-    GameData = #game_data{nr_of_players = NrOfPlayers,
-	                            nr_of_turns   = NrOfTurns},   
-	GameState = init_game_state(NrOfTurns),
-	PlayersState = #players_state{before_turn = [],
-	                              after_turn  = []}, 
-	LakeState = create_lake_state(),
-	Game = #game{game_data     = GameData,
-	             game_state    = GameState,
-                 players_state = PlayersState,
-                 lake_state    = LakeState},
-    Game.
-
-	%[GameData|[GameState|[PlayersState|[LakeState|Game]]]].
-
-%Unfinished.
-%Parameter should be NrOfTurns.
-init_game_state(NrOfTurns) ->
-    #game_state{turn = NrOfTurns}.
-    %Turn =                         {turn, 0},
-	%{gameState, Turn}.
-
-create_lake_state() -> #lake_state{lake = pick_random(lakes())}.
-%{lake_state, pick_random(lakes())}.
 
 lakes() -> [[pirch,pike],[pirch,pirch],[pirch],[pike]].
 
@@ -127,8 +124,6 @@ lakes() -> [[pirch,pike],[pirch,pirch],[pirch],[pike]].
 space_left(Game) -> 
     {game_data, Nop, _}            = Game#game.game_data,
 	{players_state, Performing, _} = Game#game.players_state,
-    %{{game_data, Nop, _}, GameRest1}          = remove(game_data, Game),
-	%{{players_state, Performing, _}, _}     = remove(players_state, GameRest1),
 	length(Performing) < Nop.
     
 
