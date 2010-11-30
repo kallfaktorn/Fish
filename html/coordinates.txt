@@ -1,0 +1,5 @@
+peninsula:     546,341
+deep_water:    728,359
+shallow_water: 505,505
+reed:          1010,310
+corner:        1350,154
