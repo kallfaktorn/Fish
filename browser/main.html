@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <script type="text/javascript" src="scripts/jsHandler.js"></script>
+        <script type="text/javascript">
+            inc("circle.js");
+            inc("mouse.js");
+            inc("std.js");
+            inc("lakes.js");
+
+            
+            imglakes = { corner:        "lake_corner.png",
+                         deep_water:    "lake_deep_water.png",
+                         peninsula:     "lake_peninsula.png",
+                         reed:          "lake_reed.png",
+                         shallow_water: "lake_shallow_water.png"
+            };
+         
+
+         function draw() {
+             var canvas = document.getElementById("canvas");
+             ctx = canvas.getContext('2d');
+
+             file = 'images/' + imglakes.peninsula;
+             lakes      = new Lakes(ctx);
+             mouse      = new Mouse();
+
+             lakes.lakes[0].img.onload = function() {
+                 ctx.drawImage(lakes.lakes[0].img,0,0);
+             }
+
+             canvas.addEventListener('mousemove', update, false);
+         }
+
+         function update(e) {
+             mouse.update(e);
+             lakes.activate(mouse.x, mouse.y);
+         }
+
+
+         </script> 
+    </head>
+
+
+
+    <body onload="draw();">
+        <canvas id="canvas" x="0" y="0" width="1530" height="718" >
+        </canvas>
+
+    </body>
+</html> 
